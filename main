@@ -1,5 +1,9 @@
 # Tästä on tarkoitus tehdä noppasimulaattori Viraston mekaniikoille. 
-# Käskyt: roll(dice, penalty) heittää dice verran noppia, jossa penalty verran sakkonoppia. what_hand(hand) tunnistaa parhaan kombinaation kädestä hand. simulate(n,dice,penalty) simuloi n kertaa heittoja dice nopalla ja penalty sakkonopalla.
+# Käskyt: 
+# roll(dice, penalty) heittää dice verran noppia, jossa penalty verran sakkonoppia. 
+# what_hand(hand) tunnistaa parhaan kombinaation kädestä hand. 
+# simulate(n,dice,penalty) simuloi n kertaa heittoja dice nopalla ja penalty sakkonopalla. onlybest=T valitsee vain parhaan käden, =F näyttää kaikki mahdolliset kädet.
+# battle(n,dice1,pendice1,dice2,pendice2) simuloi vastakkaisia heittoja n kertaa. Pelaajilla on dice noppaa ja pendice sakkonoppaa. 
 
 remove(list=ls())
 
@@ -11,7 +15,7 @@ roll = function(dice=6, penalty=0){
   return(result)
 }
 
-what_hand = function(hand){
+what_hand = function(hand,battle=F){
   highest <- 0
   second <- 0
   straight <- 0
@@ -40,8 +44,10 @@ what_hand = function(hand){
   if (highest > 1 & second > 1) combos <- c(combos,"Kaksi_Paria")
   if (highest > 1) combos <- c(combos,"Pari")
   if (length(hand) > 0) combos <- c(combos,"Ace")
+  if (battle) combos <- c(die, combos)
   return(combos)
 }
+
 
 simulate = function(n=10000, mindice=1, maxdice=20, penalty=0, onlybest=T) 
 {
@@ -62,4 +68,24 @@ simulate = function(n=10000, mindice=1, maxdice=20, penalty=0, onlybest=T)
   }
   res<-round(res/n,2)
   return(write.table(res))
+}
+
+battle = function(n=10000, dice1=5, pendice1=0, dice2=5, pendice2=0)
+{
+  hands = c("Vitoset", "Neloset", "Full_House", "Suora", "Kolmoset", "Kaksi_Paria", "Pari", "Ace", "No_Dice")
+  wins <- 0
+  ties <- 0
+  pb = txtProgressBar(min = 0, max = n, style = 3)
+  for(i in 1:n){
+    player1 <- what_hand(roll(dice1,pendice1),battle=T)
+    player2 <- what_hand(roll(dice2,pendice2),battle=T)
+    if(match(player1[2],hands) < match(player2[2],hands)) wins <- wins+1
+    if((match(player1[2],hands) == match(player2[2],hands))&(player1[1]>player2[1])) wins <- wins+1
+    if((match(player1[2],hands) == match(player2[2],hands))&(player1[1]==player2[1])) ties <- ties+1
+    setTxtProgressBar(pb, i)
+    
+  }
+  total <- c(wins/n, (n-wins-ties)/n,ties/n)
+  names(total) = c("Pelaaja 1 voittaa","Pelaaja 2 voittaa","Tasapeli (vain yksi tiebreak)")
+  return(total)
 }
