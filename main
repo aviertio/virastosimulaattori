@@ -16,14 +16,15 @@ what_hand = function(hand){
   second <- 0
   straight <- 0
   die <- 0
+  combos <- vector()
   if (all(c(2,3,4,5,6) %in% hand)) straight <- 1
   if (all(c(1,2,3,4,5) %in% hand)) straight <- 1
-  if (length(hand)==0) return("No_Dice")
+  if (length(hand)==0) combos <- c(combos,"No_Dice")
   for (i in c(6:1)){
     if (sum(hand == i) > highest){
       die <- i
       highest <- sum(hand == i)
-      }
+    }
   }
   hand[hand==die] <- 0
   for (i in c(6:1)){
@@ -31,20 +32,21 @@ what_hand = function(hand){
       second <- sum(hand == i)
     }
   }
- if (highest > 4) return("Vitoset")
- if (highest == 4) return("Neloset")
- if (highest > 2 & second > 1) return ("Full_House")
- if (straight == 1) return ("Suora")
- if (highest == 3) return("Kolmoset")
- if (highest == 2 & second == 2) return ("Kaksi_Paria")
- if (highest == 2) return("Pari")
- if (highest == 1) return("Ace")
+  if (highest > 4) combos <- c(combos,"Vitoset")
+  if (highest > 3) combos <- c(combos,"Neloset")
+  if (highest > 2 & second > 1) combos <- c(combos,"Full_House")
+  if (straight == 1) combos <- c(combos,"Suora")
+  if (highest > 2) combos <- c(combos,"Kolmoset")
+  if (highest > 1 & second > 1) combos <- c(combos,"Kaksi_Paria")
+  if (highest > 1) combos <- c(combos,"Pari")
+  if (length(hand) > 0) combos <- c(combos,"Ace")
+  return(combos)
 }
 
-simulate = function(n=10000, mindice=1, maxdice=20, penalty=0) 
+simulate = function(n=10000, mindice=1, maxdice=20, penalty=0, onlybest=T) 
 {
-  hands = c("Vitoset", "Neloset", "Full_House", "Suora", "Kolmoset", "Kaksi_Paria", "Pari", "Ace", "No_Dice")
   
+  hands = c("Vitoset", "Neloset", "Full_House", "Suora", "Kolmoset", "Kaksi_Paria", "Pari", "Ace", "No_Dice")
   res = matrix(0,length(hands),ncol=maxdice-mindice+1)
   rownames(res) = hands
   colnames(res) = c(mindice:maxdice)
@@ -52,7 +54,7 @@ simulate = function(n=10000, mindice=1, maxdice=20, penalty=0)
   for(j in mindice:maxdice){
     for(i in 1:n) {
       hand = what_hand(roll(j, penalty))
-      
+      if(onlybest) hand <- hand[1]
       res[hand,j] = res[hand,j]+1
     }
     setTxtProgressBar(pb, j)
