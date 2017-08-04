@@ -1,10 +1,14 @@
 # Tästä on tarkoitus tehdä noppasimulaattori Viraston mekaniikoille. 
-# Käskyt: roll(dice) heittää dice verran noppia. what_hand(hand) tunnistaa parhaan kombinaation kädestä hand. simulate(n,dice) simuloi n kertaa dice verran heittoja.
+# Käskyt: roll(dice, penalty) heittää dice verran noppia, jossa penalty verran sakkonoppia. what_hand(hand) tunnistaa parhaan kombinaation kädestä hand. simulate(n,dice,penalty) simuloi n kertaa heittoja dice nopalla ja penalty sakkonopalla.
 
 remove(list=ls())
 
-roll = function(dice=6){
-  return(sample(1:6,dice,replace=T))
+roll = function(dice=6, penalty=0){
+  pen <- 0
+  result <- sample(1:6,dice,replace=T)
+  pen <- sample(1:6,penalty,replace=T)
+  result <- (result[!result %in% pen])
+  return(result)
 }
 
 what_hand = function(hand){
@@ -13,6 +17,7 @@ what_hand = function(hand){
   straight <- 0
   if (all(c(2,3,4,5,6) %in% hand)) straight <- 1
   if (all(c(1,2,3,4,5) %in% hand)) straight <- 1
+  if (max(hand)==0) return("No Dice")
   for (i in c(6:1)){
     if (sum(hand == i) > highest){
       die <- i
@@ -35,9 +40,9 @@ what_hand = function(hand){
  if (highest == 1) return("Ace")
 }
 
-simulate = function(n=10000,dice=6) 
+simulate = function(n=10000, dice=6, penalty=0) 
 {
-  hands = c("Vitoset", "Neloset", "Full House", "Suora", "Kolmoset", "Kaksi Paria", "Pari", "Ace")
+  hands = c("Vitoset", "Neloset", "Full House", "Suora", "Kolmoset", "Kaksi Paria", "Pari", "Ace", "No Dice")
   
   res = matrix(rep(0,length(hands)),ncol=1)
   rownames(res) = hands
@@ -45,7 +50,7 @@ simulate = function(n=10000,dice=6)
   
   pb = txtProgressBar(min = 0, max = n, style = 3)
   for(i in 1:n) {
-    hand = what_hand(roll(dice))
+    hand = what_hand(roll(dice, penalty))
     
     res[hand,1] = res[hand,1]+1
     setTxtProgressBar(pb, i)
